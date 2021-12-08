@@ -20,13 +20,13 @@
                  minlength="3"
                  [(ngModel)]=customer.firstName
                  name="firstName"
-                 #firstNameVar="ngModel"
-                 [ngClass]="{'is-invalid': (firstNameVar.touched || firstNameVar.dirty) && !firstNameVar.valid }" />
+                 #customerForm.get('firstName')="ngModel"
+                 [ngClass]="{'is-invalid': (customerForm.get('firstName').touched || customerForm.get('firstName').dirty) && !customerForm.get('firstName').valid }" />
           <span class="invalid-feedback">
-            <span *ngIf="firstNameVar.errors?.required">
+            <span *ngIf="customerForm.get('firstName').errors?.required">
               Please enter your first name.
             </span>
-            <span *ngIf="firstNameVar.errors?.minlength">
+            <span *ngIf="customerForm.get('firstName').errors?.minlength">
               The first name must be longer than 3 characters.
             </span>
           </span>
