@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import {FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn} from '@angular/forms';
+import {FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn, FormArray} from '@angular/forms';
+
+import { debounceTime } from 'rxjs/operators';
 
 import { Customer } from './customer';
 
@@ -54,6 +56,10 @@ export class CustomerComponent implements OnInit {
   customer: Customer = new Customer();
   emailMessage = '';
 
+  get addresses(): FormArray {
+    return <FormArray>this.customerForm.get('addresses');
+}
+
   private validationMessages: any = {
     required: 'Please enter your email address.',
     email: 'Please enter a valid email address.'
@@ -64,14 +70,8 @@ export class CustomerComponent implements OnInit {
   ngOnInit(): void {
     // Initializes the customerForm with the formBuilder
     this.customerForm = this.formBuilder.group({
-      firstName: [
-        '',
-        [Validators.required, Validators.minLength(3)]
-      ],
-      lastName: [
-        '',
-        [Validators.required, Validators.maxLength(50)]
-      ],
+      firstName: ['', [Validators.required, Validators.minLength(3)]],
+      lastName: ['', [Validators.required, Validators.maxLength(50)]],
       emailGroup: this.formBuilder.group({
         email: [
           '',
@@ -84,11 +84,9 @@ export class CustomerComponent implements OnInit {
       }, { validator: emailMatcher }),
       phone: '',
       notification: 'email',
-      rating: [
-        null,
-        ratingRange
-        ],
-      sendCatalog: true
+      rating: [null, ratingRange],
+      sendCatalog: true,
+      addresses: this.formBuilder.array([ this.buildAddress() ])
     });
 
     // Use a Watcher to check for changes in the form inputs-9-*
@@ -96,8 +94,11 @@ export class CustomerComponent implements OnInit {
       value => this.setNotification(value)
     );
 
+    // Give 1s to the user to enter a value before displaying error messages
     const emailControl = this.customerForm.get('emailGroup.email');
-    emailControl!.valueChanges.subscribe(
+    emailControl!.valueChanges.pipe(
+      debounceTime(1000)
+    ).subscribe(
       value => this.setMessage(emailControl)
     );
   }
@@ -111,6 +112,20 @@ export class CustomerComponent implements OnInit {
       email: 'jack@twitter.com',
       sendCatalog: false
     })
+  }
+
+  buildAddress(): FormGroup {
+    return this.formBuilder.group({
+      addressType: 'home',
+      street1: '',
+      street2: '',
+      state: '',
+      zip: ''
+    })
+  }
+
+  addAddress(): void {
+    this.addresses.push(this.buildAddress());
   }
 
   setNotification(notificationMethod: string): void {
