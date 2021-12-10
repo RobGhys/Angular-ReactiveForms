@@ -52,6 +52,12 @@ export class CustomerComponent implements OnInit {
 
   customerForm!: FormGroup;
   customer: Customer = new Customer();
+  emailMessage = '';
+
+  private validationMessages: any = {
+    required: 'Please enter your email address.',
+    email: 'Please enter a valid email address.'
+  };
 
   constructor(private formBuilder: FormBuilder) { }
 
@@ -83,7 +89,17 @@ export class CustomerComponent implements OnInit {
         ratingRange
         ],
       sendCatalog: true
-    })
+    });
+
+    // Use a Watcher to check for changes in the form inputs-9-*
+    this.customerForm.get('notification')!.valueChanges.subscribe(
+      value => this.setNotification(value)
+    );
+
+    const emailControl = this.customerForm.get('emailGroup.email');
+    emailControl!.valueChanges.subscribe(
+      value => this.setMessage(emailControl)
+    );
   }
 
   populateTestData(): void {
@@ -118,5 +134,17 @@ export class CustomerComponent implements OnInit {
   save(): void {
     console.log(this.customerForm);
     console.log('Saved: ' + JSON.stringify(this.customerForm.value));
+  }
+
+
+  setMessage(control: AbstractControl | null): void {
+    // Clear current emailMessage
+    this.emailMessage = '';
+
+    // Determine a validation message should be displayed
+    if ((control!.untouched || control!.dirty) && control!.errors) {
+      this.emailMessage = Object.keys(control!.errors).map(
+        key => this.validationMessages[key]).join('');
+    }
   }
 }
