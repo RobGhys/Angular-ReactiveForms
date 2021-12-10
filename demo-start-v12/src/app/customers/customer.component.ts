@@ -1,7 +1,47 @@
 import { Component, OnInit } from '@angular/core';
-import {FormGroup, FormBuilder, Validators} from '@angular/forms';
+import {FormGroup, FormBuilder, Validators, AbstractControl, ValidatorFn} from '@angular/forms';
 
 import { Customer } from './customer';
+
+/**
+ *Specific validator used only in this component
+ * @param control: an AbstractControl (either form-control or form-group)
+ * @returns a map of {string, boolean} if the form is valid
+ * @returns null if the form is invalid
+ */
+function ratingRange(min: number, max: number): ValidatorFn {
+
+  return (control: AbstractControl): { [key: string]: boolean } | null => {
+    // Return true if control.value is invalid
+    if (control.value !== null && (isNaN(control.value) || min || max)) {
+      return {'range': true};
+    }
+    // Return null if validation is ok
+    else {
+      return null;
+    }
+  }
+}
+
+function emailMatcher(control: AbstractControl): { [key: string]: boolean } | null {
+  // Use of non-null assertion operator '!'
+  const emailControl = control.get('email')!;
+  const confirmControl = control.get('confirmEmail')!;
+
+  // Return null if either form has not been touched yey ('pristine')
+  if (emailControl.pristine || confirmControl.pristine) {
+    return null;
+  }
+
+  // Return null if both values match
+  if (emailControl.value === confirmControl.value) {
+    return null;
+  }
+  // Return a map of { 'match' : true} if control values differ
+  else {
+    return { 'match': true };
+  }
+}
 
 @Component({
   selector: 'app-customer',
@@ -26,12 +66,22 @@ export class CustomerComponent implements OnInit {
         '',
         [Validators.required, Validators.maxLength(50)]
       ],
-      email: [
-        '',
-        [Validators.required, Validators.email]
-      ],
+      emailGroup: this.formBuilder.group({
+        email: [
+          '',
+          [Validators.required, Validators.email]
+        ],
+        confirmEmail: [
+          '',
+          Validators.required
+        ],
+      }, { validator: emailMatcher }),
       phone: '',
       notification: 'email',
+      rating: [
+        null,
+        ratingRange
+        ],
       sendCatalog: true
     })
   }
